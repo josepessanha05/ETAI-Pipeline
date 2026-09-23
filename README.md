@@ -2,7 +2,10 @@
 
 20231690 - José Pessanha
 
-Linear Regression
+Week 2
+
+
+Logistic Regression
 
 Train accuracy: 0.679
 Test accuracy:  0.678
@@ -15,6 +18,21 @@ Test accuracy:  0.626
 Current best model: Linear Regression - current decision tree model is overfitting
 
 
+
+Week 3
+
+
+Logistic Regression
+
+Train accuracy: 0.676
+Test accuracy:  0.657
+
+Decision Tree
+
+Train accuracy: 0.792
+Test accuracy:  0.611
+
+Current pre-processing slightly worsens previous results, though the logistic regression remains the best overall model.
 
 ## Project structure
 
