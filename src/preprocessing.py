@@ -15,12 +15,32 @@ import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import OneHotEncoder, OrdinalEncoder, StandardScaler, MinMaxScaler, RobustScaler
+from sklearn.model_selection import StratifiedKFold, train_test_split
+from sklearn.preprocessing import (
+    OneHotEncoder, OrdinalEncoder, StandardScaler, MinMaxScaler, RobustScaler,
+)
 from category_encoders import CountEncoder, TargetEncoder
-from src.data_diagnostics import flag_invalid_values
 
+def flag_invalid_values(df: pd.DataFrame, rules: dict) -> pd.DataFrame:
+    """
+    Applies a dict of {column: {"min": ..., "max": ...}} domain rules (either bound is
+    optional) and converts violations to NaN **in place** on `df`. An "impossible but
+    not missing" value (an age of -3, a COMPAS decile score of 15) counts as missing
+    once this runs -- `.isna()` alone would never have caught it.
 
+    Returns a small report: how many violations were found per column.
+    """
+    report_rows = []
+    for column, bounds in rules.items():
+        if column not in df.columns:
+            continue
+        numeric = pd.to_numeric(df[column], errors="coerce")
+        lower_ok = numeric >= bounds["min"] if "min" in bounds else pd.Series(True, index=numeric.index)
+        upper_ok = numeric <= bounds["max"] if "max" in bounds else pd.Series(True, index=numeric.index)
+        violations = numeric.notna() & ~(lower_ok & upper_ok)
+        report_rows.append({"column": column, "rule": bounds, "violations": int(violations.sum())})
+        df.loc[violations, column] = np.nan
+    return pd.DataFrame(report_rows)
 
 def _canonicalize_categories(df: pd.DataFrame, columns_and_maps: dict, placeholder_tokens: set) -> pd.DataFrame:
     out = df.copy()
@@ -61,6 +81,21 @@ def clean_dataset(df: pd.DataFrame, diagnostics_config: dict) -> pd.DataFrame:
     out = out.drop(columns=columns_to_drop)
 
     return out
+
+
+def drop_duplicate_rows(df: pd.DataFrame, id_column: str = None) -> pd.DataFrame:
+    """
+    TRAINING DATA ONLY (week 4). Drops exact duplicate rows and repeated ids (keeping
+    the first), so the same person can't be counted twice -- or land in both the
+    development and the locked test set. Must run *before* `split_dev_test()`.
+
+    Never call this on data you're predicting for: every row there needs a prediction.
+    """
+    out = df.drop_duplicates()
+    if id_column and id_column in out.columns:
+        out = out.drop_duplicates(subset=id_column, keep="first")
+    return out
+
 
 def add_missingness_indicators(df: pd.DataFrame, mnar_indicator_sources: list) -> pd.DataFrame:
     """Adds a `<col>_was_missing` flag for each MNAR-diagnosed column, before that
@@ -105,11 +140,12 @@ _ENCODERS = {
 
 def build_preprocessor(preprocessing_config: dict) -> ColumnTransformer:
     """
-    Factory: builds a leak-safe ColumnTransformer for this week's chosen encoder/scaler
-    pair -- read from `config.yaml`'s `preprocessing` section (found by the empirical
-    grid in 02_preprocessing.ipynb, not hardcoded here). Every encoder tolerates unseen
-    categories at transform time; fit happens on the training fold only, via the
-    surrounding sklearn Pipeline's own fit/transform discipline.
+    Factory: builds a leak-safe ColumnTransformer for the chosen encoder/scaler pair --
+    read from `config.yaml`'s `preprocessing` section (chosen there, not hardcoded
+    here). Every encoder tolerates unseen
+    categories at transform time. Nothing is fit here: fitting happens later, on the
+    training part of each CV fold only, because this object is placed *inside* the
+    model's sklearn Pipeline (see main.py).
     """
     encoder_name = preprocessing_config["encoder"]
     scaler_name = preprocessing_config["scaler"]
@@ -140,15 +176,18 @@ def build_preprocessor(preprocessing_config: dict) -> ColumnTransformer:
     ])
 
 
-def split_train_test(X, y, extras, test_size: float, random_state: int):
+def split_dev_test(X, y, extras, test_size: float, random_state: int):
     """
-    Stratified split of X, y, and the extras frame (race/score_text, kept aside for the
-    fairness report) together, so all three stay row-aligned. This is the leak-safe
-    boundary line -- everything downstream (imputation, encoding, scaling, inside
-    build_preprocessor's ColumnTransformer) may only ever be fit on X_train, never on
-    X_test or the full dataset.
+    Sets the final test set aside (week 4 -- replaces week 2/3's `split_train_test`).
+
+    Stratified split of X, y and the extras frame (race/score_text, kept for the fairness
+    report) together, so all three stay row-aligned. Returns a *development* set and a
+    *locked test set*:
+      - development set: everything we're allowed to learn from and compare models on.
+        Cross-validation (src/evaluate.py) splits it again into train/validation folds.
+      - locked test set: never used to fit, tune, compare or choose anything. Its size and seed live in config.yaml's `test_set` section and are never changed after today.
     """
-    X_train, X_test, y_train, y_test, extras_train, extras_test = train_test_split(
+    X_dev, X_test, y_dev, y_test, extras_dev, extras_test = train_test_split(
         X, y, extras, test_size=test_size, random_state=random_state, stratify=y
     )
-    return X_train, X_test, y_train, y_test, extras_train, extras_test
+    return X_dev, X_test, y_dev, y_test, extras_dev, extras_test

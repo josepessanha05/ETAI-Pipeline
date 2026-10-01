@@ -34,6 +34,50 @@ Test accuracy:  0.611
 
 Current pre-processing slightly worsens previous results, though the logistic regression remains the best overall model.
 
+
+Week 4
+
+Dummy (baseline)
+
+fold  train  validation    gap
+    1  0.549       0.549  0.000
+    2  0.549       0.549 -0.000
+    3  0.549       0.549 -0.000
+    4  0.549       0.549 -0.000
+    5  0.549       0.549 -0.000
+
+
+Logistic Regression
+
+fold  train  validation    gap
+    1  0.675       0.682 -0.007
+    2  0.680       0.653  0.027
+    3  0.674       0.674 -0.000
+    4  0.671       0.691 -0.020
+    5  0.675       0.666  0.010
+
+
+Decision Tree
+
+ fold  train  validation   gap
+    1  0.801       0.620 0.181
+    2  0.806       0.604 0.202
+    3  0.798       0.647 0.151
+    4  0.801       0.634 0.167
+    5  0.801       0.624 0.177
+
+Random Forest
+
+fold  train  validation   gap
+    1  0.801       0.628 0.173
+    2  0.806       0.618 0.188
+    3  0.798       0.633 0.165
+    4  0.801       0.650 0.151
+    5  0.801       0.627 0.174
+
+Cross-validation and preprocessing changes improved previous results. Logistic Regression remains the best model, as both the decision tree and random forests overfit the data.
+
+
 ## Project structure
 
 ```
