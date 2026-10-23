@@ -2,7 +2,7 @@
 
 20231690 - José Pessanha
 
-Week 2
+## Week 2
 
 
 Logistic Regression
@@ -19,7 +19,7 @@ Current best model: Linear Regression - current decision tree model is overfitti
 
 
 
-Week 3
+## Week 3
 
 
 Logistic Regression
@@ -35,7 +35,7 @@ Test accuracy:  0.611
 Current pre-processing slightly worsens previous results, though the logistic regression remains the best overall model.
 
 
-Week 4
+## Week 4
 
 Dummy (baseline)
 
@@ -80,7 +80,7 @@ Cross-validation and preprocessing changes improved previous results. Logistic R
 
 
 
-Week 6
+## Week 6
 
 
 Logistic Regression
@@ -146,6 +146,367 @@ Gap         mean = +0.002   std = 0.020
 
 After tuning, logistic regression no longer yields the best results. Oblique Random Forest is now the best model, registering 0.692 accuracy in the training set and 0.682 in the validation set (very small overfit).
 
+
+
+# Week 7
+
+
+# Logistic Regression
+
+Untuned
+
+
+                   mean   std
+accuracy          0.668 0.012
+balanced_accuracy 0.665 0.012
+precision         0.631 0.016
+recall            0.634 0.019
+f1                0.633 0.013
+fbeta_2           0.634 0.016
+roc_auc           0.719 0.014
+average_precision 0.673 0.029
+
+roc_auc: train-validation gap mean = +0.002
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2205          965
+true 1          951         1650
+
+
+Tuned
+
+
+                   mean   std
+accuracy          0.676 0.016
+balanced_accuracy 0.670 0.014
+precision         0.650 0.023
+recall            0.611 0.006
+f1                0.630 0.012
+fbeta_2           0.619 0.007
+roc_auc           0.718 0.014
+average_precision 0.672 0.028
+
+roc_auc: train-validation gap mean = +0.002
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2313          857
+true 1         1011         1590
+
+# Decision Tree
+
+Untuned
+
+
+                   mean   std
+accuracy          0.662 0.022
+balanced_accuracy 0.660 0.021
+precision         0.624 0.034
+recall            0.641 0.058
+f1                0.630 0.025
+fbeta_2           0.636 0.043
+roc_auc           0.719 0.017
+average_precision 0.667 0.029
+
+roc_auc: train-validation gap mean = +0.029
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2199          971
+true 1          991         1610
+
+Tuned
+
+
+                   mean   std
+accuracy          0.672 0.016
+balanced_accuracy 0.667 0.015
+precision         0.643 0.024
+recall            0.617 0.032
+f1                0.629 0.017
+fbeta_2           0.622 0.025
+roc_auc           0.720 0.014
+average_precision 0.670 0.023
+
+roc_auc: train-validation gap mean = +0.019
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2273          897
+true 1          995         1606
+
+
+# Random Forest
+
+Untuned
+
+
+                   mean   std
+accuracy          0.678 0.018
+balanced_accuracy 0.672 0.017
+precision         0.651 0.027
+recall            0.616 0.020
+f1                0.633 0.016
+fbeta_2           0.623 0.017
+roc_auc           0.724 0.014
+average_precision 0.684 0.026
+
+roc_auc: train-validation gap mean = +0.014
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2308          862
+true 1          998         1603
+
+Tuned
+
+                   mean   std
+accuracy          0.675 0.017
+balanced_accuracy 0.670 0.017
+precision         0.644 0.021
+recall            0.624 0.021
+f1                0.634 0.018
+fbeta_2           0.628 0.019
+roc_auc           0.727 0.016
+average_precision 0.688 0.023
+
+roc_auc: train-validation gap mean = +0.019
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2274          896
+true 1          979         1622
+
+# Oblique Random Forest
+
+Untuned
+
+
+                   mean   std
+accuracy          0.682 0.014
+balanced_accuracy 0.671 0.013
+precision         0.685 0.028
+recall            0.550 0.018
+f1                0.610 0.012
+fbeta_2           0.572 0.014
+roc_auc           0.727 0.014
+average_precision 0.686 0.028
+
+roc_auc: train-validation gap mean = +0.022
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2507          663
+true 1         1170         1431
+
+Tuned
+
+
+                   mean   std
+accuracy          0.680 0.013
+balanced_accuracy 0.670 0.013
+precision         0.675 0.020
+recall            0.562 0.017
+f1                0.613 0.015
+fbeta_2           0.581 0.016
+roc_auc           0.726 0.015
+average_precision 0.685 0.024
+
+roc_auc: train-validation gap mean = +0.024
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2465          705
+true 1         1140         1461
+
+
+# Adaboost
+
+Untuned
+
+
+                   mean   std
+accuracy          0.679 0.015
+balanced_accuracy 0.666 0.014
+precision         0.683 0.026
+recall            0.538 0.021
+f1                0.601 0.017
+fbeta_2           0.562 0.018
+roc_auc           0.723 0.013
+average_precision 0.685 0.021
+
+roc_auc: train-validation gap mean = +0.006
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2518          652
+true 1         1202         1399
+
+Tuned
+
+
+                   mean   std
+accuracy          0.684 0.016
+balanced_accuracy 0.673 0.016
+precision         0.684 0.025
+recall            0.559 0.028
+f1                0.615 0.020
+fbeta_2           0.580 0.025
+roc_auc           0.727 0.015
+average_precision 0.689 0.022
+
+roc_auc: train-validation gap mean = +0.010
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2497          673
+true 1         1148         1453
+
+
+# Gradient Boosting
+
+Untuned
+
+
+                   mean   std
+accuracy          0.675 0.012
+balanced_accuracy 0.663 0.013
+precision         0.675 0.019
+recall            0.540 0.031
+f1                0.600 0.020
+fbeta_2           0.562 0.027
+roc_auc           0.724 0.015
+average_precision 0.686 0.026
+
+roc_auc: train-validation gap mean = +0.040
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2493          677
+true 1         1196         1405
+
+Tuned
+
+
+                   mean   std
+accuracy          0.681 0.017
+balanced_accuracy 0.671 0.018
+precision         0.676 0.021
+recall            0.563 0.033
+f1                0.614 0.025
+fbeta_2           0.582 0.030
+roc_auc           0.727 0.016
+average_precision 0.692 0.026
+
+roc_auc: train-validation gap mean = +0.014
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2466          704
+true 1         1136         1465
+
+
+# Hist Gradient Boosting
+
+Untuned
+
+
+                   mean   std
+accuracy          0.679 0.014
+balanced_accuracy 0.667 0.014
+precision         0.680 0.026
+recall            0.546 0.023
+f1                0.605 0.016
+fbeta_2           0.568 0.020
+roc_auc           0.725 0.016
+average_precision 0.689 0.028
+
+roc_auc: train-validation gap mean = +0.030
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2499          671
+true 1         1182         1419
+
+Tuned
+
+
+                   mean   std
+accuracy          0.683 0.016
+balanced_accuracy 0.671 0.016
+precision         0.682 0.028
+recall            0.557 0.029
+f1                0.612 0.020
+fbeta_2           0.578 0.025
+roc_auc           0.728 0.015
+average_precision 0.691 0.024
+
+roc_auc: train-validation gap mean = +0.010
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2491          679
+true 1         1153         1448
+
+# Gaussian Naive Bayes
+
+Untuned
+
+
+                   mean   std
+accuracy          0.621 0.010
+balanced_accuracy 0.591 0.010
+precision         0.701 0.039
+recall            0.280 0.011
+f1                0.400 0.013
+fbeta_2           0.318 0.011
+roc_auc           0.698 0.012
+average_precision 0.646 0.025
+
+roc_auc: train-validation gap mean = +0.001
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2856          314
+true 1         1872          729
+
+Tuned
+
+                   mean   std
+accuracy          0.622 0.012
+balanced_accuracy 0.588 0.012
+precision         0.738 0.048
+recall            0.250 0.014
+f1                0.373 0.019
+fbeta_2           0.288 0.016
+roc_auc           0.705 0.011
+average_precision 0.655 0.027
+
+roc_auc: train-validation gap mean = +0.002
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2937          233
+true 1         1951          650
+
+Seeing as the objective of the model is to minimize the ratio of false positives compared to the original model, the selection to be accounted for most is precision. If we look only at precision, the first choice would be the Naive Bayes model, however it focuses in precision so much to the extent it overpredicts the number of non-reoffenders, resulting in an extremely low recall (number of all the actual positive cases in the dataset). So, if we also look at the F1 score instead, which focuses on an harmonized balance between precision and recall, while still accounting mainly for precision, the current best model is Adaboost, as it scores an average precision of 0.684 with its current tuning, while maintaining a 0.01 roc-auc gap between training and validation.
 
 ## Project structure
 
