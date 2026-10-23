@@ -1,10 +1,11 @@
 """Model construction: the model alone (`build_model`) and preprocessing + model (`build_pipeline`)."""
 from sklearn.dummy import DummyClassifier
-from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier, RandomForestClassifier
+from sklearn.ensemble import AdaBoostClassifier, BaggingClassifier, RandomForestClassifier, GradientBoostingClassifier, HistGradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
 
 from src.preprocessing import build_preprocessor
 
@@ -38,8 +39,9 @@ _MODELS = {
     "dummy": DummyClassifier,
     "logistic_regression": LogisticRegression,
     "decision_tree": DecisionTreeClassifier,
-    # week 4: an ensemble of decision trees, each trained on a bootstrap sample of the rows with a
-    # random subset of features at every split; predictions are averaged. Untuned for now.
+    "gradient_boosting": GradientBoostingClassifier,
+    "hist_gradient_boosting": HistGradientBoostingClassifier,
+    "gaussian_nb": GaussianNB,
     "random_forest": RandomForestClassifier,
     "oblique_random_forest": oblique_random_forest,
     "adaboost": adaboost

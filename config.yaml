@@ -13,7 +13,9 @@ cv:
   n_splits: 5
   shuffle: true
   random_state: 42
-  scoring: "accuracy"
+  # Reported for every run. fbeta_<beta> weights recall beta times as much as precision.
+  metrics: ["accuracy", "balanced_accuracy", "precision", "recall", "f1", "fbeta_2", "roc_auc", "average_precision"]
+  selection_metric: "roc_auc"                       # one of metrics: what tuning maximises and runs are ranked by
   n_jobs: 1                                         # -1 = all CPU cores
 
 diagnostics:
@@ -62,22 +64,22 @@ preprocessing:
     categorical_strategy: "most_frequent"   
 
 model:
-  type: "adaboost"     # dummy | logistic_regression | decision_tree | random_forest | oblique_random_forest | adaboost
+  type: "gaussian_nb"     # dummy | logistic_regression | decision_tree | random_forest | oblique_random_forest | adaboost | gradient_boosting | hist_gradient_boosting | gaussian_nb
   params: 
-    max_depth: 1
-    n_estimators: 200
-    learning_rate: 0.2
-    random_state: 42
+    {var_smoothing: 0.000000001}
   # Models' params, to swap in:
-  # decision_tree:          {random_state: 42, max_depth: 5, min_samples_leaf: 10, criterion: "gini"}
-  # logistic_regression:    {max_iter: 2000, random_state: 42, solver: "lbfgs", C: 1.0, penalty: "l2", n_jobs: -1, class_weight: "balanced", max_features: "sqrt", multi_class: "auto"}
-  # oblique_random_forest:  {n_estimators: 200, max_depth: 6, n_components: 5, min_samples_leaf: 30, random_state: 42, n_jobs: -1}
+  # decision_tree:          {random_state: 42, max_depth: 5, min_samples_leaf: 10, criterion: "gini", class_weight: balanced}
+  # logistic_regression:    {max_iter: 2000, random_state: 42, solver: "lbfgs", class_weight: balanced}
+  # oblique_random_forest:  {n_estimators: 200, n_components: 10, random_state: 42, n_jobs: -1, class_weight: balanced}
   # adaboost:               {max_depth: 1, n_estimators: 200, learning_rate: 0.3, random_state: 42}
-  # random forest:          {n_estimators: 200, max_depth: 10, min_samples_leaf: 10, max_features: "sqrt", random_state: 42, n_jobs: -1}
+  # random_forest:          {n_estimators: 200, max_depth: 10, min_samples_leaf: 10, max_features: "sqrt", random_state: 42, n_jobs: -1, class_weight: balanced}
+  # gradient_boosting       {n_estimators: 200, max_depth: 3, learning_rate: 0.1, random_state: 42}
+  # hist_gradient_boosting  {max_iter: 200, max_depth: 3, learning_rate: 0.1, random_state: 42}
+  # gaussian_nb:            {var_smoothing: 1e-9}
 
 tuning:
   enabled: true
-  n_trials: 30
+  n_trials: 20
   n_splits: 5                                       # folds that score each candidate
   random_state: 42                                  # seeds the sampler and those folds
   # Keys are Pipeline parameter names. Types: int / float (low, high, log) or categorical (choices).
@@ -96,13 +98,28 @@ tuning:
       model__estimator__tree__min_samples_leaf: {type: int, low: 1, high: 200, log: true}
       model__estimator__project__n_components: {type: int, low: 3, high: 10}   # <= number of features
     adaboost:
-      model__estimator__max_depth: {type: int, low: 1, high: 8}
+      model__estimator__max_depth: {type: int, low: 1, high: 3}
       model__n_estimators: {type: int, low: 25, high: 400, log: true}
       model__learning_rate: {type: float, low: 0.01, high: 1.0, log: true}
     logistic_regression:
       model__C: {type: float, low: 0.001, high: 100, log: true}
       model__solver: {type: categorical, choices: ["lbfgs"]}
       model__max_iter: {type: categorical, choices: [1000, 2000, 3000]}
+    gradient_boosting:
+      model__n_estimators: {type: int, low: 25, high: 500, log: true}
+      model__learning_rate: {type: float, low: 0.01, high: 0.5, log: true}
+      model__max_depth: {type: int, low: 1, high: 6}
+      model__min_samples_leaf: {type: int, low: 1, high: 200, log: true}
+      model__subsample: {type: float, low: 0.5, high: 1.0}
+    hist_gradient_boosting:
+      model__max_iter: {type: int, low: 25, high: 500, log: true}
+      model__learning_rate: {type: float, low: 0.01, high: 0.5, log: true}
+      model__max_leaf_nodes: {type: int, low: 2, high: 63, log: true}
+      model__min_samples_leaf: {type: int, low: 5, high: 200, log: true}
+      model__l2_regularization: {type: float, low: 0.000001, high: 10.0, log: true}
+    gaussian_nb:
+      model__var_smoothing: {type: float, low: 0.000000000001, high: 0.1, log: true}
 
 output:
   results_dir: "results"
+  scoreboard: "results/runs.csv"   # one row per run; delete it when the data, cleaning or folds change
