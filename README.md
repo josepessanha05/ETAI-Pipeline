@@ -508,6 +508,77 @@ true 1         1951          650
 
 Seeing as the objective of the model is to minimize the ratio of false positives compared to the original model, the selection to be accounted for most is precision. If we look only at precision, the first choice would be the Naive Bayes model, however it focuses in precision so much to the extent it overpredicts the number of non-reoffenders, resulting in an extremely low recall (number of all the actual positive cases in the dataset). So, if we also look at the F1 score instead, which focuses on an harmonized balance between precision and recall, while still accounting mainly for precision, the current best model is Adaboost, as it scores an average precision of 0.684 with its current tuning, while maintaining a 0.01 roc-auc gap between training and validation.
 
+
+
+# Week 8
+
+
+# XGBoost (Tuning is activated)
+
+No feature selection
+
+
+                   mean   std
+accuracy          0.682 0.016
+balanced_accuracy 0.670 0.015
+precision         0.683 0.027
+recall            0.551 0.016
+f1                0.610 0.016
+fbeta_2           0.573 0.015
+roc_auc           0.727 0.015
+average_precision 0.691 0.023
+
+roc_auc: train-validation gap mean = +0.012
+
+
+        predicted 0  predicted 1
+true 0         2503          667
+true 1         1167         1434
+
+              precision    recall  f1-score   support
+
+           0       0.68      0.79      0.73      3170
+           1       0.68      0.55      0.61      2601
+
+    accuracy                           0.68      5771
+   macro avg       0.68      0.67      0.67      5771
+weighted avg       0.68      0.68      0.68      5771
+
+
+Feature selection on
+
+
+
+                   mean   std
+accuracy          0.681 0.013
+balanced_accuracy 0.671 0.013
+precision         0.675 0.021
+recall            0.565 0.022
+f1                0.615 0.016
+fbeta_2           0.584 0.019
+roc_auc           0.725 0.012
+average_precision 0.689 0.021
+
+roc_auc: train-validation gap mean = +0.005
+
+
+        predicted 0  predicted 1
+true 0         2461          709
+true 1         1131         1470
+
+              precision    recall  f1-score   support
+
+           0       0.69      0.78      0.73      3170
+           1       0.67      0.57      0.62      2601
+
+    accuracy                           0.68      5771
+   macro avg       0.68      0.67      0.67      5771
+weighted avg       0.68      0.68      0.68      5771
+
+
+The model with feature selection activated shows a tradeoff between a slightly better recall and f1 score, at the cost of a slight decrease in precision. Keeping in mind improving its predecessor's precision is the main goal of the pipeline, the small increase in recall and f1 score is not enough to make up for the loss in precision. For that reason, for XGBoost, the better option would be to leave the features as they are.
+
+
 ## Project structure
 
 ```

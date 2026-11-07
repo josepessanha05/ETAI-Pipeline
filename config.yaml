@@ -64,9 +64,9 @@ preprocessing:
     categorical_strategy: "most_frequent"   
 
 model:
-  type: "gaussian_nb"     # dummy | logistic_regression | decision_tree | random_forest | oblique_random_forest | adaboost | gradient_boosting | hist_gradient_boosting | gaussian_nb
+  type: "xgboost"  # dummy | logistic_regression | naive_bayes | decision_tree | random_forest | oblique_random_forest | adaboost | gradient_boosting | hist_gradient_boosting | xgboost
   params: 
-    {var_smoothing: 0.000000001}
+    {n_estimators: 300, learning_rate: 0.05, max_depth: 4, random_state: 42, n_jobs: -1}
   # Models' params, to swap in:
   # decision_tree:          {random_state: 42, max_depth: 5, min_samples_leaf: 10, criterion: "gini", class_weight: balanced}
   # logistic_regression:    {max_iter: 2000, random_state: 42, solver: "lbfgs", class_weight: balanced}
@@ -76,6 +76,17 @@ model:
   # gradient_boosting       {n_estimators: 200, max_depth: 3, learning_rate: 0.1, random_state: 42}
   # hist_gradient_boosting  {max_iter: 200, max_depth: 3, learning_rate: 0.1, random_state: 42}
   # gaussian_nb:            {var_smoothing: 1e-9}
+  # xgboost:                {n_estimators: 300, learning_rate: 0.05, max_depth: 4, random_state: 42, n_jobs: -1}
+
+
+# Learned step between preprocessing and the model: keeps the features that at least
+# min_votes of three models (random forest, gradient boosting, L1 logistic regression) choose.
+feature_selection:
+  enabled: true
+  min_votes: 2                                      # 1 (keep almost all) .. 3 (keep only unanimous)
+  random_state: 42
+  search_space:                                     # tuned together with the model when tuning is on
+    select__min_votes: {type: int, low: 1, high: 3}
 
 tuning:
   enabled: true
@@ -119,6 +130,16 @@ tuning:
       model__l2_regularization: {type: float, low: 0.000001, high: 10.0, log: true}
     gaussian_nb:
       model__var_smoothing: {type: float, low: 0.000000000001, high: 0.1, log: true}
+    xgboost:
+      model__n_estimators: {type: int, low: 50, high: 600, log: true}
+      model__learning_rate: {type: float, low: 0.01, high: 0.3, log: true}
+      model__max_depth: {type: int, low: 1, high: 8}
+      model__min_child_weight: {type: float, low: 1.0, high: 50.0, log: true}
+      model__subsample: {type: float, low: 0.5, high: 1.0}
+      model__colsample_bytree: {type: float, low: 0.5, high: 1.0}
+      model__reg_lambda: {type: float, low: 0.01, high: 10.0, log: true}
+      model__reg_alpha: {type: float, low: 0.001, high: 10.0, log: true}
+      model__gamma: {type: float, low: 0.0, high: 5.0}
 
 output:
   results_dir: "results"

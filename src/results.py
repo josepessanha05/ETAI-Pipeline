@@ -25,6 +25,9 @@ def save_run(results_dir: str, run: str,config: dict, report_text: str) -> str:
     tuning = config.get("tuning", {})
     tuning_line = (f"Optuna, {tuning['n_trials']} trials x {tuning['n_splits']} folds, nested CV  "
                    f"random_state={tuning['random_state']}" if tuning.get("enabled") else "off")
+    selection = config.get("feature_selection") or {}
+    selection_line = (f"VoteSelector, min_votes={selection.get('min_votes', 2)} (before tuning)"
+                      if selection.get("enabled") else "off")
 
     header = (
         f"Run: {run}\n"
