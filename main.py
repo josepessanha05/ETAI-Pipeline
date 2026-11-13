@@ -15,13 +15,14 @@ import yaml
 from sklearn.model_selection import StratifiedKFold
 from datetime import datetime
 from src.data import load_data
-from src.preprocessing import clean_dataset, drop_duplicate_rows, split_features_target, split_dev_test
+from src.preprocessing import clean_dataset, drop_duplicate_rows, split_features_target, split_dev_test, check_feature_coverage
 from src.model import build_pipeline
 from src.evaluate import build_scorers, cross_validate_pipeline, cv_report, oof_classification_report, fairness_report
 from src.tuning import tune_pipeline, nested_cross_validate, tuning_report
 from src.results import save_run, save_scores
 
-
+import sys
+from src.predict import predict_new 
 
 def load_config(path: str = "config.yaml") -> dict:
     with open(path, "r") as f:
@@ -29,7 +30,8 @@ def load_config(path: str = "config.yaml") -> dict:
 
 
 def main():
-    config = load_config()
+    config_path = sys.argv[1] if len(sys.argv) > 1 else "config.yaml"
+    config = load_config(config_path)
     run = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_type = config["model"]["type"]
 
@@ -40,6 +42,7 @@ def main():
 
     mnar_sources = config["preprocessing"].get("mnar_indicator_sources", [])
     X, y, extras = split_features_target(df_clean, config["data"], mnar_sources)
+    check_feature_coverage(X, config["preprocessing"])
     # From here on, every decision uses the development set only; the test set stays locked.
     X_dev, X_test, y_dev, y_test, extras_dev, extras_test = split_dev_test(
         X, y, extras,
@@ -119,14 +122,20 @@ def main():
     for name in metrics:
         print(f"  {name:<18s} {final_scores[name].mean():.3f} ± {final_scores[name].std(ddof=1):.3f}")
     report += "\n\n" + oof_classification_report(y_dev, oof_proba)
-    report += "\n" + fairness_report(y_dev, oof_proba, extras_dev, sensitive_attr=config["data"]["sensitive_attr"])
-
+    report += "\n" + fairness_report(y_dev, oof_proba, extras_dev,
+                                    sensitive_attr=config["data"]["sensitive_attr"],
+                                    reference=config["data"].get("reference_prediction"))
     pipeline.fit(X_dev, y_dev)
     refit = f"Final model: {model_type} refit on all {len(X_dev)} development rows."
     if selection_enabled:
         all_features = pipeline.named_steps["prep"].get_feature_names_out()
         kept = pipeline.named_steps["select"].get_feature_names_out(all_features)
         refit += f"\nFeatures kept: {len(kept)} of {len(all_features)}: {', '.join(kept)}"
+
+    if config["data"].get("new_path"):
+        out_path = config["output"]["predictions"]
+        n = predict_new(pipeline, config, out_path)
+        refit += f"\nPredicted {n} new rows -> {out_path}"
     report += "\n" + refit + "\n"
 
     row = {"run": run, "data": config["data"]["path"], "model": model_type, "tuned": tuning_enabled,

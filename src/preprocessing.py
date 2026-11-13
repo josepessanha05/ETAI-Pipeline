@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import (
-    OneHotEncoder, OrdinalEncoder, StandardScaler, MinMaxScaler, RobustScaler,
+    OneHotEncoder, OrdinalEncoder, StandardScaler, MinMaxScaler, RobustScaler, TargetEncoder as SkTargetEncoder
 )
 from category_encoders import CountEncoder, TargetEncoder
 
@@ -63,6 +63,11 @@ def clean_dataset(df: pd.DataFrame, diagnostics_config: dict) -> pd.DataFrame:
     flag_invalid_values(out, diagnostics_config.get("validity_rules", {}))
     out = _canonicalize_categories(out, diagnostics_config.get("canonical_categories", {}), placeholder_tokens)
 
+    # placeholders in ANY text column become real missing values
+    for col in out.select_dtypes(include=["object", "string"]).columns:
+        is_placeholder = out[col].notna() & out[col].astype(str).str.strip().isin(placeholder_tokens)
+        out.loc[is_placeholder, col] = np.nan
+
     columns_to_drop = [c for c in diagnostics_config.get("redundant_columns", []) if c in out.columns]
     return out.drop(columns=columns_to_drop)
 
@@ -99,7 +104,8 @@ def split_features_target(df: pd.DataFrame, data_config: dict, mnar_indicator_so
     df = add_missingness_indicators(df, mnar_indicator_sources)
     y = df[target] if target in df.columns else None
 
-    extras_cols = [c for c in [sensitive_attr, "score_text"] if c in df.columns]
+    ref_col = (data_config.get("reference_prediction") or {}).get("column")
+    extras_cols = [c for c in [sensitive_attr, ref_col] if c and c in df.columns]
     extras = df[extras_cols].copy() if extras_cols else None
 
     always_drop = set(drop_columns) | {target, sensitive_attr}
@@ -114,8 +120,8 @@ _ENCODERS = {
     "ordinal": lambda: OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
     "count": lambda: CountEncoder(handle_unknown=0, handle_missing=0),
     "target": lambda: TargetEncoder(handle_unknown="value", handle_missing="value"),
+    "target_cv": lambda: SkTargetEncoder(cv=StratifiedKFold(n_splits=5, shuffle=True, random_state=42))
 }
-
 
 def build_preprocessor(preprocessing_config: dict) -> ColumnTransformer:
     """
@@ -155,4 +161,13 @@ def split_dev_test(X, y, extras, test_size: float, random_state: int):
     X_dev, X_test, y_dev, y_test, extras_dev, extras_test = train_test_split(
         X, y, extras, test_size=test_size, random_state=random_state, stratify=y
     )
-    return train_test_split(X, y, extras, test_size=test_size, random_state=random_state, stratify=y)
+    return X_dev, X_test, y_dev, y_test, extras_dev, extras_test
+
+def check_feature_coverage(X: pd.DataFrame, preprocessing_config: dict) -> None:
+    """Warns about columns in X that the model will silently ignore."""
+    listed = (set(preprocessing_config["numeric_features"])
+              | set(preprocessing_config["categorical_features"])
+              | {f"{c}_was_missing" for c in preprocessing_config.get("mnar_indicator_sources", [])})
+    ignored = [c for c in X.columns if c not in listed]
+    if ignored:
+        print(f"WARNING: {len(ignored)} column(s) in the data are not used by the model: {ignored}")

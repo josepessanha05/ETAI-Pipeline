@@ -1,0 +1,104 @@
+Run: 20261113_205552
+Model: gaussian_nb  params={'var_smoothing': 1e-09}
+Preprocessing: encoder=target_cv  scaler=standard
+CV: 5 stratified folds  shuffle=True  random_state=42
+Metrics: ['accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'fbeta_2', 'roc_auc', 'average_precision']  selection metric: roc_auc
+Locked test set: size=0.2  random_state=42  (not evaluated)
+============================================================
+
+Hyperparameters from config.yaml: {'var_smoothing': 1e-09}
+
+Cross-validation (5 stratified folds, selection metric: roc_auc)
+
+ fold  train  validation    gap  accuracy  balanced_accuracy  precision  recall    f1  fbeta_2  roc_auc  average_precision
+    1  0.886       0.881  0.004     0.828              0.688      0.750   0.419 0.538    0.460    0.881              0.716
+    2  0.889       0.888  0.001     0.821              0.683      0.716   0.417 0.527    0.455    0.888              0.723
+    3  0.882       0.906 -0.024     0.824              0.686      0.729   0.422 0.534    0.461    0.906              0.746
+    4  0.893       0.865  0.029     0.811              0.672      0.679   0.404 0.507    0.440    0.865              0.684
+    5  0.887       0.881  0.007     0.807              0.647      0.703   0.339 0.457    0.378    0.881              0.707
+
+                   mean   std
+accuracy          0.818 0.009
+balanced_accuracy 0.675 0.017
+precision         0.715 0.027
+recall            0.400 0.035
+f1                0.513 0.033
+fbeta_2           0.439 0.035
+roc_auc           0.884 0.015
+average_precision 0.715 0.023
+
+roc_auc: train-validation gap mean = +0.003
+
+No-model floor (dummy, same folds): roc_auc = 0.500
+
+Nested cross-validation (the tuning procedure, estimated honestly) (5 stratified folds, selection metric: roc_auc)
+
+ fold  train  validation    gap  accuracy  balanced_accuracy  precision  recall    f1  fbeta_2  roc_auc  average_precision  inner_best  model__var_smoothing  select__min_votes
+    1  0.887       0.889 -0.002     0.818              0.646      0.793   0.319 0.455    0.362    0.889              0.725       0.886                 0.043                  1
+    2  0.889       0.888  0.001     0.807              0.648      0.699   0.343 0.461    0.382    0.888              0.717       0.888                 0.009                  1
+    3  0.883       0.905 -0.021     0.808              0.636      0.745   0.304 0.432    0.345    0.905              0.721       0.882                 0.023                  1
+    4  0.894       0.867  0.027     0.806              0.637      0.720   0.313 0.436    0.353    0.867              0.661       0.893                 0.046                  1
+    5  0.888       0.880  0.008     0.806              0.640      0.712   0.322 0.443    0.361    0.880              0.706       0.886                 0.007                  2
+
+                   mean   std
+accuracy          0.809 0.005
+balanced_accuracy 0.642 0.006
+precision         0.734 0.037
+recall            0.320 0.015
+f1                0.445 0.012
+fbeta_2           0.361 0.014
+roc_auc           0.886 0.014
+average_precision 0.706 0.026
+
+roc_auc: train-validation gap mean = +0.003
+
+Tuning on the whole development set (20 Optuna trials, metric: roc_auc)
+Best hyperparameters: {'model__var_smoothing': 0.04594045298674533, 'select__min_votes': 1}
+Best mean CV score:   0.886  (the maximum over all trials -- optimistic)
+
+Top 5 trials:
+ trial  mean roc_auc  model__var_smoothing  select__min_votes   std
+    10         0.886                 0.046                  1 0.013
+    12         0.886                 0.052                  1 0.014
+    11         0.886                 0.008                  1 0.014
+     6         0.885                 0.001                  1 0.015
+    18         0.885                 0.000                  1 0.015
+
+Optimism check (nested CV):
+  tuning score inside the outer folds (inner_best) mean = 0.887
+  honest score on the outer folds (validation)     mean = 0.886
+  optimism = +0.001   -> report the honest one
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         3516          135
+true 1          781          368
+
+              precision    recall  f1-score   support
+
+           0       0.82      0.96      0.88      3651
+           1       0.73      0.32      0.45      1149
+
+    accuracy                           0.81      4800
+   macro avg       0.77      0.64      0.67      4800
+weighted avg       0.80      0.81      0.78      4800
+
+Error rates by sex (development set, out-of-fold)
+FPR = share of true 0s predicted 1; TPR = share of true 1s predicted 1
+
+  Our model:
+    Female               FPR = 0.03 (n=1390)   TPR = 0.29 (n=180)   predicted positive = 0.06
+    Male                 FPR = 0.04 (n=2261)   TPR = 0.33 (n=969)   predicted positive = 0.13
+
+Final model: gaussian_nb refit on all 4800 development rows.
+Features kept: 8 of 37: numeric__age, numeric__education_num, numeric__capital_gain, numeric__capital_loss, numeric__hours_per_week, categorical__marital_status, categorical__occupation, categorical__relationship
+Predicted 2000 new rows -> results_adult/adult_new_predictions.csv
+
+Scoreboard:
+            run       model  tuned feature_selection  roc_auc   std  untuned  floor
+20261113_194333     xgboost  False       min_votes 2    0.913 0.016    0.913  0.500
+20261113_194726     xgboost  False       min_votes 2    0.913 0.016    0.913  0.500
+20261113_195307     xgboost  False       min_votes 2    0.913 0.016    0.913  0.500
+20261113_195559     xgboost   True       min_votes 1    0.909 0.015    0.913  0.500
+20261113_205552 gaussian_nb   True       min_votes 1    0.886 0.014    0.884  0.500

@@ -1,0 +1,105 @@
+Run: 20261113_210604
+Model: oblique_random_forest  params={'n_estimators': 200, 'n_components': 10, 'random_state': 42, 'n_jobs': -1, 'class_weight': 'balanced'}
+Preprocessing: encoder=target_cv  scaler=standard
+CV: 5 stratified folds  shuffle=True  random_state=42
+Metrics: ['accuracy', 'balanced_accuracy', 'precision', 'recall', 'f1', 'fbeta_2', 'roc_auc', 'average_precision']  selection metric: roc_auc
+Locked test set: size=0.2  random_state=42  (not evaluated)
+============================================================
+
+Hyperparameters from config.yaml: {'n_estimators': 200, 'n_components': 10, 'random_state': 42, 'n_jobs': -1, 'class_weight': 'balanced'}
+
+Cross-validation (5 stratified folds, selection metric: roc_auc)
+
+ fold  train  validation   gap  accuracy  balanced_accuracy  precision  recall    f1  fbeta_2  roc_auc  average_precision
+    1  0.990       0.884 0.105     0.839              0.743      0.703   0.559 0.623    0.583    0.884              0.740
+    2  0.989       0.889 0.101     0.839              0.729      0.730   0.517 0.606    0.549    0.889              0.733
+    3  0.987       0.912 0.074     0.867              0.778      0.787   0.609 0.686    0.638    0.912              0.790
+    4  0.988       0.873 0.116     0.838              0.743      0.701   0.561 0.623    0.584    0.873              0.714
+    5  0.992       0.884 0.108     0.855              0.772      0.738   0.613 0.670    0.635    0.884              0.757
+
+                   mean   std
+accuracy          0.847 0.013
+balanced_accuracy 0.753 0.021
+precision         0.732 0.035
+recall            0.572 0.040
+f1                0.642 0.035
+fbeta_2           0.598 0.038
+roc_auc           0.888 0.015
+average_precision 0.747 0.029
+
+roc_auc: train-validation gap mean = +0.101
+
+No-model floor (dummy, same folds): roc_auc = 0.500
+
+Nested cross-validation (the tuning procedure, estimated honestly) (5 stratified folds, selection metric: roc_auc)
+
+ fold  train  validation    gap  accuracy  balanced_accuracy  precision  recall    f1  fbeta_2  roc_auc  average_precision  inner_best  model__estimator__tree__max_depth  model__estimator__tree__min_samples_leaf  model__estimator__project__n_components  select__min_votes
+    1  0.926       0.903  0.023     0.808              0.817      0.567   0.834 0.675    0.762    0.903              0.769       0.900                                  6                                         7                                       10                  2
+    2  0.921       0.900  0.021     0.822              0.832      0.589   0.852 0.696    0.782    0.900              0.731       0.904                                  5                                         2                                       10                  1
+    3  0.915       0.922 -0.007     0.831              0.853      0.599   0.896 0.718    0.815    0.922              0.803       0.895                                  5                                         2                                       10                  1
+    4  0.931       0.882  0.049     0.797              0.805      0.551   0.822 0.660    0.748    0.882              0.730       0.907                                  6                                         7                                       10                  2
+    5  0.920       0.905  0.015     0.801              0.811      0.557   0.830 0.667    0.756    0.905              0.793       0.901                                  5                                         2                                       10                  1
+
+                   mean   std
+accuracy          0.812 0.014
+balanced_accuracy 0.824 0.019
+precision         0.572 0.021
+recall            0.847 0.029
+f1                0.683 0.024
+fbeta_2           0.773 0.027
+roc_auc           0.902 0.014
+average_precision 0.765 0.034
+
+roc_auc: train-validation gap mean = +0.020
+
+Tuning on the whole development set (20 Optuna trials, metric: roc_auc)
+Best hyperparameters: {'model__estimator__tree__max_depth': 5, 'model__estimator__tree__min_samples_leaf': 12, 'model__estimator__project__n_components': 10, 'select__min_votes': 1}
+Best mean CV score:   0.902  (the maximum over all trials -- optimistic)
+
+Top 5 trials:
+ trial  mean roc_auc  model__estimator__project__n_components  model__estimator__tree__max_depth  model__estimator__tree__min_samples_leaf  select__min_votes   std
+    14         0.902                                       10                                  5                                        12                  1 0.014
+    15         0.902                                       10                                  6                                         7                  2 0.015
+    18         0.901                                       10                                  4                                         2                  1 0.015
+    10         0.901                                       10                                  7                                        20                  1 0.015
+     4         0.901                                        6                                 10                                        12                  1 0.014
+
+Optimism check (nested CV):
+  tuning score inside the outer folds (inner_best) mean = 0.901
+  honest score on the outer folds (validation)     mean = 0.902
+  optimism = -0.001   -> report the honest one
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2924          727
+true 1          176          973
+
+              precision    recall  f1-score   support
+
+           0       0.94      0.80      0.87      3651
+           1       0.57      0.85      0.68      1149
+
+    accuracy                           0.81      4800
+   macro avg       0.76      0.82      0.77      4800
+weighted avg       0.85      0.81      0.82      4800
+
+Error rates by sex (development set, out-of-fold)
+FPR = share of true 0s predicted 1; TPR = share of true 1s predicted 1
+
+  Our model:
+    Female               FPR = 0.06 (n=1390)   TPR = 0.69 (n=180)   predicted positive = 0.13
+    Male                 FPR = 0.29 (n=2261)   TPR = 0.88 (n=969)   predicted positive = 0.46
+
+Final model: oblique_random_forest refit on all 4800 development rows.
+Features kept: 8 of 37: numeric__age, numeric__education_num, numeric__capital_gain, numeric__capital_loss, numeric__hours_per_week, categorical__marital_status, categorical__occupation, categorical__relationship
+Predicted 2000 new rows -> results_adult/adult_new_predictions.csv
+
+Scoreboard:
+            run                 model  tuned feature_selection  roc_auc   std  untuned  floor
+20261113_194333               xgboost  False       min_votes 2    0.913 0.016    0.913  0.500
+20261113_194726               xgboost  False       min_votes 2    0.913 0.016    0.913  0.500
+20261113_195307               xgboost  False       min_votes 2    0.913 0.016    0.913  0.500
+20261113_195559               xgboost   True       min_votes 1    0.909 0.015    0.913  0.500
+20261113_210604 oblique_random_forest   True       min_votes 1    0.902 0.014    0.888  0.500
+20261113_205552           gaussian_nb   True       min_votes 1    0.886 0.014    0.884  0.500

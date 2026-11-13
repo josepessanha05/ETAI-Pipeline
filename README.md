@@ -148,10 +148,10 @@ After tuning, logistic regression no longer yields the best results. Oblique Ran
 
 
 
-# Week 7
+## Week 7
 
 
-# Logistic Regression
+## Logistic Regression
 
 Untuned
 
@@ -196,7 +196,7 @@ Out-of-fold predictions, development set (threshold 0.5):
 true 0         2313          857
 true 1         1011         1590
 
-# Decision Tree
+## Decision Tree
 
 Untuned
 
@@ -241,7 +241,7 @@ true 0         2273          897
 true 1          995         1606
 
 
-# Random Forest
+## Random Forest
 
 Untuned
 
@@ -284,7 +284,7 @@ Out-of-fold predictions, development set (threshold 0.5):
 true 0         2274          896
 true 1          979         1622
 
-# Oblique Random Forest
+## Oblique Random Forest
 
 Untuned
 
@@ -329,7 +329,7 @@ true 0         2465          705
 true 1         1140         1461
 
 
-# Adaboost
+## Adaboost
 
 Untuned
 
@@ -374,7 +374,7 @@ true 0         2497          673
 true 1         1148         1453
 
 
-# Gradient Boosting
+## Gradient Boosting
 
 Untuned
 
@@ -419,7 +419,7 @@ true 0         2466          704
 true 1         1136         1465
 
 
-# Hist Gradient Boosting
+## Hist Gradient Boosting
 
 Untuned
 
@@ -463,7 +463,7 @@ Out-of-fold predictions, development set (threshold 0.5):
 true 0         2491          679
 true 1         1153         1448
 
-# Gaussian Naive Bayes
+## Gaussian Naive Bayes
 
 Untuned
 
@@ -510,10 +510,10 @@ Seeing as the objective of the model is to minimize the ratio of false positives
 
 
 
-# Week 8
+## Week 8
 
 
-# XGBoost (Tuning is activated)
+## XGBoost (Tuning is activated)
 
 No feature selection
 
@@ -577,6 +577,99 @@ weighted avg       0.68      0.68      0.68      5771
 
 
 The model with feature selection activated shows a tradeoff between a slightly better recall and f1 score, at the cost of a slight decrease in precision. Keeping in mind improving its predecessor's precision is the main goal of the pipeline, the small increase in recall and f1 score is not enough to make up for the loss in precision. For that reason, for XGBoost, the better option would be to leave the features as they are.
+
+
+
+## Week 9 - Beyond COMPAS (option A)
+
+Note: "python main.py config_adult.py" to run using the new config file
+
+## Changes made (includes some previous mistakes)
+
+| Broke | Why | Fix |
+|---|---|---|
+| `?` stayed a category | Placeholders were only turned into NaN inside `_canonicalize_categories`, which only touches columns listed in `canonical_categories`. Adult has none. | Global placeholder pass over every text column in `clean_dataset` |
+| Hardcoded `score_text` | `split_features_target` and `fairness_report` assumed COMPAS's own score exists | `data.reference_prediction` in the config, read by both functions |
+| Fairness wording | "Did not reoffend" and "COMPAS's own score" are COMPAS-specific | Generic FPR/TPR/predicted-positive report per group, with an optional reference score |
+| `age >= 18` rule | It would erase the 74 people aged 17 | Validity rules written per dataset (`age: {min: 17}`; no max on `capital_gain`, since 99999 is a real top code) |
+| Target encoder leaked | `category_encoders.TargetEncoder` is not cross-fitted, so noise columns (`v19`-`v25`) can look informative to `VoteSelector` | New `target_cv` option using sklearn's cross-fitted `TargetEncoder`; COMPAS keeps `target` |
+| `main.py` fixed config | It always loaded `config.yaml` | Config path taken from the command line (`python main.py config_adult.yaml`), defaulting to `config.yaml` |
+| No predictions for the new people | The pipeline only evaluated on training data | New `src/predict.py` (`predict_new`), called after the final refit; same cleaning, no `drop_duplicate_rows`, 2,000 rows in = 2,000 out |
+| Columns silently ignored | Anything not in `numeric_features` or `categorical_features` is dropped without an error | `check_feature_coverage` warns about unused columns in `X` |
+| Leftover placeholders unnoticed | Nothing verified that `?` was gone after cleaning | `check_placeholders_left` guard in `main.py`, plus `check_cleaning.py` to confirm the missing counts 379, 381 and 86 |
+| `RobustScaler` on skewed columns | `capital_gain` is 92% zeros, so the IQR is 0 and the column isn't really scaled | `scaler: "standard"` in `config_adult.yaml` (a log transform is an option to try) |
+| Sensitive attribute choice | The notebook leaves open which of `race` and `sex` is audited | `sensitive_attr: "sex"` is audited and never a feature; `race` is included in the remaining features |
+
+## XGBoost
+
+# Untuned
+
+                   mean   std
+accuracy          0.864 0.011
+balanced_accuracy 0.781 0.021
+precision         0.766 0.035
+recall            0.622 0.046
+f1                0.686 0.030
+fbeta_2           0.646 0.040
+roc_auc           0.913 0.016
+average_precision 0.805 0.027
+
+roc_auc: train-validation gap mean = +0.026
+
+# Tuned
+
+
+                   mean   std
+accuracy          0.858 0.010
+balanced_accuracy 0.771 0.025
+precision         0.756 0.027
+recall            0.603 0.059
+f1                0.669 0.035
+fbeta_2           0.628 0.050
+roc_auc           0.909 0.015
+average_precision 0.791 0.027
+
+roc_auc: train-validation gap mean = +0.009
+
+
+## Hist Gradient Boosting
+
+# Untuned
+
+
+                   mean   std
+accuracy          0.861 0.013
+balanced_accuracy 0.774 0.023
+precision         0.764 0.036
+recall            0.608 0.047
+f1                0.676 0.034
+fbeta_2           0.634 0.042
+roc_auc           0.911 0.017
+average_precision 0.799 0.030
+
+roc_auc: train-validation gap mean = +0.024
+
+# Tuned
+
+
+                   mean   std
+accuracy          0.860 0.011
+balanced_accuracy 0.771 0.021
+precision         0.764 0.031
+recall            0.601 0.043
+f1                0.672 0.031
+fbeta_2           0.627 0.038
+roc_auc           0.911 0.016
+average_precision 0.799 0.030
+
+roc_auc: train-validation gap mean = +0.012
+
+
+Features kept: 8 of 37: numeric__age, numeric__education_num, numeric__capital_gain, numeric__capital_loss, numeric__hours_per_week, categorical__marital_status, categorical__occupation, categorical__relationship
+
+
+Both these models registered each of the target scores. The tuning settings reduced the overfitting effect on both models, while accuracy and the F1 score suffered a minor decrease. 
+The hardest assumption to find was how placeholders are cleaned. _canonicalize_categories only converts ? to a missing value in columns listed in canonical_categories, which on COMPAS covered everything relevant, so the pipeline ran on Adult without any error, while ? stayed a real category. It was found only by checking value_counts(dropna=False) against the expected missing counts (379, 381, 86), and the issue then fixed with a pass over every text column in clean_dataset. 
 
 
 ## Project structure

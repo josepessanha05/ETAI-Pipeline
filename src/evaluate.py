@@ -90,31 +90,33 @@ def oof_classification_report(y_true, oof_proba, threshold: float = 0.5) -> str:
 
 
 def fairness_report(y_true, oof_proba, extras: pd.DataFrame, sensitive_attr: str = "race",
-                    threshold: float = 0.5) -> str:
+                    threshold: float = 0.5, reference: dict = None) -> str:
     """
-    False positive rate (share of people who did not reoffend but were predicted to) per
-    group of `sensitive_attr`, for the model's out-of-fold predictions and for COMPAS's own
-    score (`score_text` other than "Low" counts as predicted to reoffend), on the same rows.
-    Rows with an unknown group are reported as "unknown". A simple check, not a full audit.
+    Per group of `sensitive_attr`: false positive rate, true positive rate and share predicted
+    positive, for the model's out-of-fold predictions and, if `reference`
+    ({"column": ..., "negative_value": ...}) is given, for an existing score in the data
+    (any value other than `negative_value` counts as predicted positive). Unknown groups are
+    reported as "unknown". A simple check, not a full audit.
     """
     df = extras.copy()
     df[sensitive_attr] = df[sensitive_attr].astype(object).fillna("unknown")
     df["y_true"] = pd.Series(y_true).values
-    df["y_pred_model"] = (oof_proba >= threshold).astype(int)
-    df["y_pred_compas"] = (df["score_text"] != "Low").astype(int)
 
-    lines = [
-        f"False positive rate by {sensitive_attr} (development set, out-of-fold)",
-        "(share of people who did NOT reoffend, but were predicted to)",
-        "",
-    ]
-    for label, col in [("Our model", "y_pred_model"), ("COMPAS's own score", "y_pred_compas")]:
+    predictions = {"Our model": (np.asarray(oof_proba) >= threshold).astype(int)}
+    if reference:
+        predictions[f"Reference score ({reference['column']})"] = (
+            df[reference["column"]] != reference["negative_value"]).astype(int).values
+
+    lines = [f"Error rates by {sensitive_attr} (development set, out-of-fold)",
+             "FPR = share of true 0s predicted 1; TPR = share of true 1s predicted 1", ""]
+    for label, pred in predictions.items():
+        df["_pred"] = pred
         lines.append(f"  {label}:")
         for group, g in df.groupby(sensitive_attr):
-            negatives = g[g["y_true"] == 0]
-            if len(negatives) == 0:
-                continue
-            fpr = (negatives[col] == 1).mean()
-            lines.append(f"    {group:<20s} FPR = {fpr:.2f}  (n={len(negatives)})")
+            neg, pos = g[g["y_true"] == 0], g[g["y_true"] == 1]
+            fpr = (neg["_pred"] == 1).mean() if len(neg) else float("nan")
+            tpr = (pos["_pred"] == 1).mean() if len(pos) else float("nan")
+            lines.append(f"    {group:<20s} FPR = {fpr:.2f} (n={len(neg)})   "
+                         f"TPR = {tpr:.2f} (n={len(pos)})   predicted positive = {g['_pred'].mean():.2f}")
         lines.append("")
     return "\n".join(lines)
