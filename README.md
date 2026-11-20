@@ -672,6 +672,160 @@ Both these models registered each of the target scores. The tuning settings redu
 The hardest assumption to find was how placeholders are cleaned. _canonicalize_categories only converts ? to a missing value in columns listed in canonical_categories, which on COMPAS covered everything relevant, so the pipeline ran on Adult without any error, while ? stayed a real category. It was found only by checking value_counts(dropna=False) against the expected missing counts (379, 381, 86), and the issue then fixed with a pass over every text column in clean_dataset. 
 
 
+## Week 10
+
+Note: run <code>python predict.py data/compas_new_people.csv predictions.csv<code> to obtain the reoffending predictions for the 20 new people in <code>data/compas_new_people.csv</code>. The model chosen was adaboost, the previous best model overall from Week 7, with tuning and feature selection on.
+
+## Median
+
+# Untuned
+
+                   mean   std
+accuracy          0.679 0.015
+balanced_accuracy 0.666 0.014
+precision         0.683 0.026
+recall            0.538 0.021
+f1                0.601 0.017
+fbeta_2           0.562 0.018
+roc_auc           0.723 0.013
+average_precision 0.685 0.021
+
+roc_auc: train-validation gap mean = +0.006
+
+# Tuned
+
+                   mean   std
+accuracy          0.684 0.016
+balanced_accuracy 0.673 0.016
+precision         0.684 0.025
+recall            0.559 0.028
+f1                0.615 0.020
+fbeta_2           0.580 0.025
+roc_auc           0.727 0.015
+average_precision 0.689 0.022
+
+roc_auc: train-validation gap mean = +0.010
+
+
+## Mean
+
+# Untuned
+
+
+                   mean   std
+accuracy          0.676 0.015
+balanced_accuracy 0.662 0.015
+precision         0.684 0.024
+recall            0.523 0.034
+f1                0.592 0.023
+fbeta_2           0.549 0.030
+roc_auc           0.722 0.013
+average_precision 0.677 0.024
+
+roc_auc: train-validation gap mean = +0.005
+
+# Tuned
+
+
+                   mean   std
+accuracy          0.680 0.013
+balanced_accuracy 0.669 0.014
+precision         0.674 0.017
+recall            0.559 0.030
+f1                0.611 0.021
+fbeta_2           0.579 0.026
+roc_auc           0.724 0.013
+average_precision 0.685 0.021
+
+roc_auc: train-validation gap mean = +0.009
+
+## KNN
+
+# Untuned
+
+
+                   mean   std
+accuracy          0.675 0.014
+balanced_accuracy 0.662 0.013
+precision         0.682 0.025
+recall            0.524 0.016
+f1                0.592 0.015
+fbeta_2           0.549 0.015
+roc_auc           0.717 0.013
+average_precision 0.678 0.019
+
+# Tuned
+
+
+                   mean   std
+accuracy          0.672 0.010
+balanced_accuracy 0.660 0.009
+precision         0.674 0.021
+recall            0.530 0.015
+f1                0.593 0.010
+fbeta_2           0.553 0.012
+roc_auc           0.719 0.015
+average_precision 0.679 0.026
+
+roc_auc: train-validation gap mean = +0.011
+
+## Iterative
+
+# Untuned
+
+                   mean   std
+accuracy          0.678 0.015
+balanced_accuracy 0.665 0.015
+precision         0.683 0.026
+recall            0.534 0.029
+f1                0.599 0.021
+fbeta_2           0.558 0.026
+roc_auc           0.723 0.012
+average_precision 0.681 0.021
+
+roc_auc: train-validation gap mean = +0.006
+
+# Tuned
+
+                   mean   std
+accuracy          0.680 0.014
+balanced_accuracy 0.668 0.013
+precision         0.681 0.026
+recall            0.548 0.031
+f1                0.607 0.018
+fbeta_2           0.570 0.026
+roc_auc           0.724 0.013
+average_precision 0.687 0.020
+
+roc_auc: train-validation gap mean = +0.011
+
+
+The median imputer registered the best roc-auc, accuracy, and f1 scores overall, compared to the rest of the imputers. It was thus also used for the prediction of the new COMPAS observations.
+
+# predictions.csv results
+
+id,probability,prediction
+900001,0.3705910650898955,0
+900002,0.22745921868781685,0
+900003,0.30338997125386746,0
+900004,0.6583610959266866,1
+900005,0.3402648465474662,0
+900006,0.6990333909867862,1
+900007,0.407366633176607,0
+900008,0.34734199412456057,0
+900009,0.1850157999068204,0
+900010,0.23608692867942888,0
+900011,0.18253103438715673,0
+900012,0.8168905007471328,1
+900013,0.49046926637874444,0
+900014,0.7625016106241496,1
+900015,0.4171015945206332,0
+900016,0.4171015945206332,0
+900017,0.6945477007765778,1
+900018,0.2525286894299617,0
+900019,0.3222699916512299,0
+900020,0.407366633176607,0
+
 ## Project structure
 
 ```
