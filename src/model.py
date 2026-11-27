@@ -1,4 +1,8 @@
-"""Model construction: the model alone (`build_model`) and preprocessing + model (`build_pipeline`)."""
+"""
+Model construction: the model alone (`build_model`) and preprocessing + model (`build_pipeline`).
+(`VoteSelector`) and preprocessing + anomaly score + selection + model as one estimator
+(`build_pipeline`).
+"""
 
 import numpy as np
 
@@ -13,7 +17,7 @@ from sklearn.tree import DecisionTreeClassifier
 from xgboost import XGBClassifier
 from sklearn.naive_bayes import GaussianNB
 
-from src.preprocessing import build_preprocessor
+from src.preprocessing import build_preprocessor, AnomalyScore
 
 def adaboost(max_depth: int = 1, **params):
     """
@@ -92,7 +96,7 @@ class VoteSelector(SelectorMixin, BaseEstimator):
 
 
 def build_pipeline(preprocessing_config: dict, model_config: dict, selection_config: dict = None,
-                   memory=None) -> Pipeline:
+                   memory=None, anomaly_config: dict = None) -> Pipeline:
     """
     The estimator that is cross-validated, tuned and refit: preprocessing, feature selection
     (if `selection_config["enabled"]`) and model as one Pipeline, so every learned step is
@@ -102,6 +106,10 @@ def build_pipeline(preprocessing_config: dict, model_config: dict, selection_con
     reused instead of repeated, so tuning the model doesn't refit them in every trial.
     """
     steps = [("prep", build_preprocessor(preprocessing_config))]
+    if anomaly_config and anomaly_config.get("method", "none") != "none":
+            steps.append(("anomaly", AnomalyScore(method=anomaly_config["method"],
+                                                  n_neighbors=anomaly_config.get("n_neighbors", 20),
+                                                  random_state=anomaly_config.get("random_state"))))
     if selection_config and selection_config.get("enabled", False):
         steps.append(("select", VoteSelector(min_votes=selection_config.get("min_votes", 2),
                                              random_state=selection_config.get("random_state"))))

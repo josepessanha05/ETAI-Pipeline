@@ -826,6 +826,89 @@ id,probability,prediction
 900019,0.3222699916512299,0
 900020,0.407366633176607,0
 
+
+## Week 11
+
+Q: Before running anything, write your guess in the README: will the anomaly score improve the model? Are the people who reoffend the outliers?
+
+A: By treating potential outliers, anomaly score is expected to improve the model's predictive power. The reoffenders may or not be the outliers, though other anomalies related to other variables are already assessed through the model's validity rules.
+
+
+## Runs by anomaly score
+
+# None
+
+
+                   mean   std
+accuracy          0.680 0.014
+balanced_accuracy 0.670 0.014
+precision         0.673 0.027
+recall            0.566 0.032
+f1                0.614 0.019
+fbeta_2           0.584 0.027
+roc_auc           0.723 0.012
+average_precision 0.684 0.022
+
+roc_auc: train-validation gap mean = +0.008
+
+# Isolation forest
+
+
+                   mean   std
+accuracy          0.679 0.017
+balanced_accuracy 0.669 0.017
+precision         0.670 0.024
+recall            0.566 0.031
+f1                0.614 0.022
+fbeta_2           0.584 0.028
+roc_auc           0.724 0.013
+average_precision 0.684 0.021
+
+roc_auc: train-validation gap mean = +0.007
+
+# lof
+
+
+                   mean   std
+accuracy          0.680 0.017
+balanced_accuracy 0.670 0.017
+precision         0.673 0.027
+recall            0.567 0.043
+f1                0.614 0.025
+fbeta_2           0.585 0.036
+roc_auc           0.723 0.012
+average_precision 0.682 0.021
+
+roc_auc: train-validation gap mean = +0.009
+
+# Anomaly score vs the positive class (out-of-fold, development set, anomaly_score = lof)
+
+Overall positive rate: 0.451   (higher score = more unusual)
+
+top share  n_top  rate_top  rate_rest  ratio  fisher_p
+       1%     58     0.448      0.451  0.995     1.000
+       5%    289     0.460      0.450  1.022     0.762
+      10%    577     0.537      0.441  1.218     0.000
+      20%   1154     0.537      0.429  1.252     0.000
+
+Rate by anomaly decile (1 = most unusual):
+         n  rate
+score           
+1      578 0.536
+2      577 0.539
+3      577 0.456
+4      577 0.426
+5      577 0.438
+6      577 0.447
+7      577 0.345
+8      577 0.393
+9      577 0.494
+10     577 0.432
+
+The most unusual 5% of people (by out-of-fold Isolation Forest/LOF score) reoffended at 46.0%, against 45.0% for everyone else (ratio 1.02, Fisher p = 0.76), so the extreme tail is not more likely to reoffend. Widening the group to the top 10% and 20% gives rates of 53.7% against about 44% and 43% (ratios 1.22 and 1.25, p < 0.001), but the decile table shows the pattern is not monotonic: only the two most unusual deciles are elevated, and the rest fluctuate around the baseline. The anomaly score therefore carries a weak and uneven signal about reoffending.
+
+Additionally, contrary to what was expected, the score did not improve the model's predictions. Instead, both for isolation forest and lof, accuracy, f1 score, precision, recall, and roc-auc generally either slightly decrease or register higher standard deviation values.
+
 ## Project structure
 
 ```

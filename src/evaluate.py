@@ -4,6 +4,8 @@ set is never used here.
 """
 import numpy as np
 import pandas as pd
+from sklearn.base import clone
+from sklearn.pipeline import Pipeline
 from scipy import stats
 from sklearn.model_selection import cross_validate
 from sklearn.metrics import classification_report, confusion_matrix, fbeta_score, get_scorer, make_scorer
@@ -120,3 +122,51 @@ def fairness_report(y_true, oof_proba, extras: pd.DataFrame, sensitive_attr: str
                          f"TPR = {tpr:.2f} (n={len(pos)})   predicted positive = {g['_pred'].mean():.2f}")
         lines.append("")
     return "\n".join(lines)
+
+def oof_anomaly_scores(pipeline, X, y, cv):
+    """
+    Out-of-fold anomaly score for every row: on each fold, the steps up to and including
+    "anomaly" are fitted on the training part only, and the validation rows are scored.
+    No row is scored by a detector that saw it, and the label is never used by the detector.
+    """
+    names = [n for n, _ in pipeline.steps]
+    k = names.index("anomaly") + 1
+    scores = np.empty(len(X))
+    for train_idx, val_idx in cv.split(X, y):
+        sub = Pipeline([(n, clone(s)) for n, s in pipeline.steps[:k]])
+        sub.fit(X.iloc[train_idx], y.iloc[train_idx])
+        scores[val_idx] = sub.transform(X.iloc[val_idx])[:, -1]   # last column = anomaly_score
+    return scores
+
+
+def anomaly_report(score, y, fractions=(0.01, 0.05, 0.10, 0.20)) -> str:
+    """
+    Positive-class rate (for COMPAS: reoffending) among the most unusual rows (higher score =
+    more unusual) versus everyone else, for several cut-offs, with a Fisher exact test, plus
+    the rate by score decile.
+    """
+    df = pd.DataFrame({"score": np.asarray(score, dtype=float), "y": np.asarray(y)})
+    n = len(df)
+    rank = df["score"].rank(method="first", ascending=False)      # 1 = most unusual
+    overall = df["y"].mean()
+
+    rows = []
+    for f in fractions:
+        top = df[rank <= round(f * n)]
+        rest = df[rank > round(f * n)]
+        table = [[int(top["y"].sum()), int(len(top) - top["y"].sum())],
+                 [int(rest["y"].sum()), int(len(rest) - rest["y"].sum())]]
+        rows.append({"top share": f"{f:.0%}", "n_top": len(top),
+                     "rate_top": top["y"].mean(), "rate_rest": rest["y"].mean(),
+                     "ratio": top["y"].mean() / rest["y"].mean(),
+                     "fisher_p": stats.fisher_exact(table)[1]})
+    cutoffs = pd.DataFrame(rows).to_string(index=False, float_format=lambda v: f"{v:.3f}")
+
+    decile = pd.qcut(rank, 10, labels=range(1, 11))               # decile 1 = most unusual
+    by_decile = df.groupby(decile, observed=True)["y"].agg(["size", "mean"]).rename(
+        columns={"size": "n", "mean": "rate"})
+
+    return (f"Anomaly score vs the positive class (out-of-fold, development set)\n"
+            f"Overall positive rate: {overall:.3f}   (higher score = more unusual)\n\n"
+            f"{cutoffs}\n\nRate by anomaly decile (1 = most unusual):\n"
+            f"{by_decile.to_string(float_format=lambda v: f'{v:.3f}')}\n")
